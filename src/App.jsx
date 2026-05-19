@@ -1,59 +1,68 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { api } from "./api";
+import { useAuth } from "./hooks/useAuth";
+import { useRoom } from "./hooks/useRoom";
+import { useMonthPicker } from "./hooks/useMonthPicker";
+import { useTransactions } from "./hooks/useTransactions";
+import { useTransactionModal } from "./hooks/useTransactionModal";
+import { AuthPage } from "./components/AuthPage";
+import { RoomSelector } from "./components/RoomSelector";
 import { Header } from "./components/Header";
 import { DonutChart } from "./components/DonutChart";
 import { TransactionList } from "./components/TransactionList";
 import { TransactionModal } from "./components/TransactionModal";
-import { api } from "./api";
-
-const now = new Date();
+import { InviteModal } from "./components/InviteModal";
 
 export default function App() {
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [transactions, setTransactions] = useState([]);
-  const [summary, setSummary] = useState({ income: 0, expense: 0, balance: 0 });
-  const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // { mode: "add"|"edit", kind?: "income"|"expense", prefill?: transaction }
+  const { user, isAuthenticated, signIn, signUp, signOut } = useAuth();
+  const { room, rooms, loading: roomLoading, selectRoom, createRoom } = useRoom(isAuthenticated);
+  const { year, month, onChange } = useMonthPicker();
+  const { transactions, summary, loading, create, update, remove } = useTransactions(room?.id, year, month);
+  const { modal, openAdd, openEdit, close } = useTransactionModal();
+  const [inviteOpen, setInviteOpen] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await api.getTransactions(year, month);
-      setTransactions(data.transactions);
-      setSummary(data.summary);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [year, month]);
+  if (!isAuthenticated) {
+    return <AuthPage onSignIn={signIn} onSignUp={signUp} />;
+  }
 
-  useEffect(() => { load(); }, [load]);
+  if (roomLoading) {
+    return <div className="loader" style={{ paddingTop: "40vh" }}>Loading…</div>;
+  }
 
-  function handleMonthChange(y, m) {
-    setYear(y);
-    setMonth(m);
+  if (!room) {
+    return <RoomSelector rooms={rooms} onSelect={selectRoom} onCreate={createRoom} />;
+  }
+
+  async function handleInvite(email) {
+    const res = await api.inviteMember(room.id, email);
+    return res.message;
   }
 
   async function handleSave(attrs) {
     if (modal.mode === "edit") {
-      await api.updateTransaction(modal.prefill.id, attrs);
+      await update(modal.prefill.id, attrs);
     } else {
-      await api.createTransaction(attrs);
+      await create(attrs);
     }
-    setModal(null);
-    load();
+    close();
   }
 
   async function handleDelete(id) {
     if (!window.confirm("Delete this transaction?")) return;
-    await api.deleteTransaction(id);
-    load();
+    await remove(id);
   }
 
   return (
     <div className="app">
-      <Header selectedYear={year} selectedMonth={month} onChange={handleMonthChange} />
+      <Header
+        selectedYear={year}
+        selectedMonth={month}
+        onChange={onChange}
+        roomName={room.name}
+        user={user}
+        onInvite={() => setInviteOpen(true)}
+        onSignOut={signOut}
+      />
 
       <main className="main-content">
         {loading ? (
@@ -69,30 +78,18 @@ export default function App() {
             </div>
 
             <div className="fab-row">
-              <button
-                className="fab fab--remove"
-                onClick={() => setModal({ mode: "add", kind: "expense" })}
-                aria-label="Add expense"
-              >
-                −
-              </button>
-              <button
-                className="fab fab--add"
-                onClick={() => setModal({ mode: "add", kind: "income" })}
-                aria-label="Add income"
-              >
-                +
-              </button>
+              <button className="fab fab--remove" onClick={() => openAdd("expense")} aria-label="Add expense">−</button>
+              <button className="fab fab--add" onClick={() => openAdd("income")} aria-label="Add income">+</button>
             </div>
 
-            <TransactionList
-              transactions={transactions}
-              onEdit={(t) => setModal({ mode: "edit", prefill: t })}
-              onDelete={handleDelete}
-            />
+            <TransactionList transactions={transactions} onEdit={openEdit} onDelete={handleDelete} />
           </>
         )}
       </main>
+
+      {inviteOpen && (
+        <InviteModal onInvite={handleInvite} onClose={() => setInviteOpen(false)} />
+      )}
 
       {modal && (
         <TransactionModal
@@ -100,7 +97,7 @@ export default function App() {
           initialKind={modal.kind ?? "expense"}
           prefill={modal.prefill}
           onSave={handleSave}
-          onClose={() => setModal(null)}
+          onClose={close}
         />
       )}
     </div>

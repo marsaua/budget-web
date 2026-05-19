@@ -1,11 +1,12 @@
 import { useRef, useEffect } from "react";
+import { UserPlus, LogOut } from "lucide-react";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
 
-export function Header({ selectedYear, selectedMonth, onChange }) {
+export function Header({ selectedYear, selectedMonth, onChange, roomName, user, onSignOut, onInvite }) {
   const scrollRef = useRef(null);
   const currentYear = new Date().getFullYear();
   const years = [currentYear - 1, currentYear, currentYear + 1];
@@ -34,8 +35,24 @@ export function Header({ selectedYear, selectedMonth, onChange }) {
   return (
     <header className="header">
       <div className="header-top">
-        <span className="header-logo">Budget</span>
-        <span className="header-year">{selectedYear}</span>
+        <span className="header-logo">{roomName ?? "Budget"}</span>
+        <div className="header-right">
+          {user && <span className="header-user">{user.name}</span>}
+          {onInvite && (
+            <button className="header-icon-btn" onClick={onInvite} aria-label="Invite member">
+              <UserPlus size={17} />
+            </button>
+          )}
+          {onSignOut && (
+            <button
+              className="header-icon-btn"
+              onClick={() => window.confirm("Sign out?") && onSignOut()}
+              aria-label="Sign out"
+            >
+              <LogOut size={17} />
+            </button>
+          )}
+        </div>
       </div>
       <div className="month-tabs-wrap">
         <div className="month-tabs" ref={scrollRef}>
