@@ -17,6 +17,9 @@ export function TransactionRow({ transaction, onEdit, onDelete }) {
         <span className="transaction-category" style={{ color: meta.color }}>
           {meta.label} · {new Date(transaction.occurred_on + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
         </span>
+        {transaction.author?.name && (
+          <span className="transaction-author">by {transaction.author.name}</span>
+        )}
       </div>
       <div className="transaction-right">
         <span className="transaction-amount" style={{ color: amountColor }}>
