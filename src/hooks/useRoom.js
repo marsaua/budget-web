@@ -30,5 +30,8 @@ export function useRoom(enabled) {
     setRoom(r);
   }, []);
 
-  return { room, rooms, loading, selectRoom, createRoom };
+  const renameRoom = useCallback((newName) => setRoom((r) => ({ ...r, name: newName })), []);
+  const clearRoom = useCallback(() => setRoom(null), []);
+
+  return { room, rooms, loading, selectRoom, createRoom, renameRoom, clearRoom };
 }

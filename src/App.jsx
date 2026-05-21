@@ -12,14 +12,17 @@ import { DonutChart } from "./components/DonutChart";
 import { TransactionList } from "./components/TransactionList";
 import { TransactionModal } from "./components/TransactionModal";
 import { InviteModal } from "./components/InviteModal";
+import { RoomSettingsModal } from "./components/RoomSettingsModal";
 
 export default function App() {
   const { user, isAuthenticated, signIn, signUp, signOut } = useAuth();
-  const { room, rooms, loading: roomLoading, selectRoom, createRoom } = useRoom(isAuthenticated);
+  const { room, rooms, loading: roomLoading, selectRoom, createRoom, renameRoom, clearRoom } = useRoom(isAuthenticated);
   const { year, month, onChange } = useMonthPicker();
   const { transactions, summary, loading, create, update, remove } = useTransactions(room?.id, year, month);
   const { modal, openAdd, openEdit, close } = useTransactionModal();
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const isOwner = !!user && !!room && user.id === room.owner_id;
 
   if (!isAuthenticated) {
     return <AuthPage onSignIn={signIn} onSignUp={signUp} />;
@@ -62,6 +65,8 @@ export default function App() {
         user={user}
         onInvite={() => setInviteOpen(true)}
         onSignOut={signOut}
+        isOwner={isOwner}
+        onSettings={() => setSettingsOpen(true)}
       />
 
       <main className="main-content">
@@ -89,6 +94,15 @@ export default function App() {
 
       {inviteOpen && (
         <InviteModal onInvite={handleInvite} onClose={() => setInviteOpen(false)} />
+      )}
+
+      {settingsOpen && (
+        <RoomSettingsModal
+          room={room}
+          onClose={() => setSettingsOpen(false)}
+          onRename={(newName) => { renameRoom(newName); setSettingsOpen(false); }}
+          onDelete={() => { clearRoom(); setSettingsOpen(false); }}
+        />
       )}
 
       {modal && (

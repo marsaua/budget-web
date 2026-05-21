@@ -54,6 +54,10 @@ export const api = {
   createRoom: (name) => req("POST", "/rooms", { room: { name } }),
   inviteMember: (roomId, email) =>
     req("POST", `/rooms/${roomId}/invitations`, { invitation: { email } }),
+  getMembers: (roomId) => req("GET", `/rooms/${roomId}/members`),
+  removeMember: (roomId, membershipId) => req("DELETE", `/rooms/${roomId}/members/${membershipId}`),
+  updateRoom: (roomId, attrs) => req("PATCH", `/rooms/${roomId}`, { room: attrs }),
+  deleteRoom: (roomId) => req("DELETE", `/rooms/${roomId}`),
 
   // Transactions (room-scoped)
   getTransactions: (roomId, year, month) =>
