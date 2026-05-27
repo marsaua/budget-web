@@ -13,15 +13,42 @@ import { TransactionList } from "./components/TransactionList";
 import { TransactionModal } from "./components/TransactionModal";
 import { InviteModal } from "./components/InviteModal";
 import { RoomSettingsModal } from "./components/RoomSettingsModal";
+import { CategoryFilter } from "./components/CategoryFilter";
 
 export default function App() {
   const { user, isAuthenticated, signIn, signUp, signOut } = useAuth();
-  const { room, rooms, loading: roomLoading, selectRoom, createRoom, renameRoom, clearRoom } = useRoom(isAuthenticated);
+  const {
+    room,
+    rooms,
+    loading: roomLoading,
+    selectRoom,
+    createRoom,
+    renameRoom,
+    clearRoom,
+  } = useRoom(isAuthenticated);
   const { year, month, onChange } = useMonthPicker();
-  const { transactions, summary, loading, create, update, remove } = useTransactions(room?.id, year, month);
+  const [selectedCategories, setSelectedCategories] = useState(new Set());
+  const { transactions, summary, loading, create, update, remove } =
+    useTransactions(room?.id, year, month, selectedCategories);
   const { modal, openAdd, openEdit, close } = useTransactionModal();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const filterKey = `${room?.id ?? ""}-${year}-${month}`;
+  const [lastFilterKey, setLastFilterKey] = useState(filterKey);
+  if (filterKey !== lastFilterKey) {
+    setSelectedCategories(new Set());
+    setLastFilterKey(filterKey);
+  }
+
+  function toggleCategory(cat) {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+      next.has(cat) ? next.delete(cat) : next.add(cat);
+      return next;
+    });
+  }
+
   const isOwner = !!user && !!room && user.id === room.owner_id;
 
   if (!isAuthenticated) {
@@ -29,11 +56,17 @@ export default function App() {
   }
 
   if (roomLoading) {
-    return <div className="loader" style={{ paddingTop: "40vh" }}>Loading…</div>;
+    return (
+      <div className="loader" style={{ paddingTop: "40vh" }}>
+        Loading…
+      </div>
+    );
   }
 
   if (!room) {
-    return <RoomSelector rooms={rooms} onSelect={selectRoom} onCreate={createRoom} />;
+    return (
+      <RoomSelector rooms={rooms} onSelect={selectRoom} onCreate={createRoom} />
+    );
   }
 
   async function handleInvite(email) {
@@ -77,31 +110,72 @@ export default function App() {
             <DonutChart transactions={transactions} summary={summary} />
 
             <div className="balance-bar">
-              <span>Income <strong style={{ color: "var(--color-income)" }}>+{summary.income.toLocaleString("uk-UA")} ₴</strong></span>
+              <span>
+                Income{" "}
+                <strong style={{ color: "var(--color-income)" }}>
+                  +{summary.income.toLocaleString("uk-UA")} ₴
+                </strong>
+              </span>
               <span className="balance-divider">|</span>
-              <span>Expenses <strong style={{ color: "var(--color-expense)" }}>−{summary.expense.toLocaleString("uk-UA")} ₴</strong></span>
+              <span>
+                Expenses{" "}
+                <strong style={{ color: "var(--color-expense)" }}>
+                  −{summary.expense.toLocaleString("uk-UA")} ₴
+                </strong>
+              </span>
             </div>
 
             <div className="fab-row">
-              <button className="fab fab--remove" onClick={() => openAdd("expense")} aria-label="Add expense">−</button>
-              <button className="fab fab--add" onClick={() => openAdd("income")} aria-label="Add income">+</button>
+              <button
+                className="fab fab--remove"
+                onClick={() => openAdd("expense")}
+                aria-label="Add expense"
+              >
+                −
+              </button>
+              <button
+                className="fab fab--add"
+                onClick={() => openAdd("income")}
+                aria-label="Add income"
+              >
+                +
+              </button>
             </div>
 
-            <TransactionList transactions={transactions} onEdit={openEdit} onDelete={handleDelete} />
+            <CategoryFilter
+              selected={selectedCategories}
+              onToggle={toggleCategory}
+              onClear={() => setSelectedCategories(new Set())}
+            />
+
+            <TransactionList
+              transactions={transactions}
+              onEdit={openEdit}
+              onDelete={handleDelete}
+            />
           </>
         )}
       </main>
 
       {inviteOpen && (
-        <InviteModal onInvite={handleInvite} onClose={() => setInviteOpen(false)} />
+        <InviteModal
+          onInvite={handleInvite}
+          onClose={() => setInviteOpen(false)}
+        />
       )}
 
       {settingsOpen && (
         <RoomSettingsModal
           room={room}
           onClose={() => setSettingsOpen(false)}
-          onRename={(newName) => { renameRoom(newName); setSettingsOpen(false); }}
-          onDelete={() => { clearRoom(); setSettingsOpen(false); }}
+          onRename={(newName) => {
+            renameRoom(newName);
+            setSettingsOpen(false);
+          }}
+          onDelete={() => {
+            clearRoom();
+            setSettingsOpen(false);
+          }}
         />
       )}
 
