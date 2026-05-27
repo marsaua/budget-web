@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export function RoomSelector({ rooms, onSelect, onCreate }) {
+export function RoomSelector({ rooms, onSelect, onCreate, notice }) {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,6 +23,8 @@ export function RoomSelector({ rooms, onSelect, onCreate }) {
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="auth-logo">Budget</div>
+
+        {notice && <div className="field-error">{notice}</div>}
 
         {rooms.length > 0 && (
           <>
