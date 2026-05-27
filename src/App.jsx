@@ -35,6 +35,10 @@ export default function App() {
     }
   }, [roomNotFound]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (room != null) setRoomError(false);
+  }, [room]);
+
   const isOwner = !!user && !!room && user.id === room.owner_id;
 
   if (!isAuthenticated) {
