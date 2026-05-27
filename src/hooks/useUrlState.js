@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 function toggle(set, item) {
   const next = new Set(set);
@@ -34,6 +34,8 @@ function buildUrl(state) {
 
 export function useUrlState() {
   const [state, setState] = useState(() => parseUrl());
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   useEffect(() => {
     const onPop = () => setState(parseUrl());
@@ -48,10 +50,10 @@ export function useUrlState() {
 
   return {
     ...state,
-    setRoom:         (roomId) => push({ ...state, roomId, page: 1, categories: new Set() }),
-    setMonth:        (y, m)   => push({ ...state, year: y, month: m, page: 1, categories: new Set() }),
-    toggleCategory:  (cat)    => push({ ...state, categories: toggle(state.categories, cat), page: 1 }),
-    clearCategories: ()       => push({ ...state, categories: new Set(), page: 1 }),
-    setPage:         (page)   => push({ ...state, page }),
+    setRoom:         (roomId) => push({ ...stateRef.current, roomId, page: 1, categories: new Set() }),
+    setMonth:        (y, m)   => push({ ...stateRef.current, year: y, month: m, page: 1, categories: new Set() }),
+    toggleCategory:  (cat)    => push({ ...stateRef.current, categories: toggle(stateRef.current.categories, cat), page: 1 }),
+    clearCategories: ()       => push({ ...stateRef.current, categories: new Set(), page: 1 }),
+    setPage:         (page)   => push({ ...stateRef.current, page }),
   };
 }
