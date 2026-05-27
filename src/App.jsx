@@ -26,6 +26,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => setSelectedCategories(new Set()), [year, month]);
+  useEffect(() => setSelectedCategories(new Set()), [room?.id]);
 
   function toggleCategory(cat) {
     setSelectedCategories((prev) => {
