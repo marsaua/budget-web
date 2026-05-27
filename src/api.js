@@ -62,7 +62,7 @@ export const api = {
   // Transactions (room-scoped)
   getTransactions: (roomId, year, month, categories = []) => {
     const params = new URLSearchParams({ year, month });
-    for (const cat of categories) params.append("categories[]", cat);
+    for (const cat of categories.filter(Boolean)) params.append("categories[]", cat);
     return req("GET", `/rooms/${roomId}/transactions?${params}`);
   },
   createTransaction: (roomId, attrs) =>
