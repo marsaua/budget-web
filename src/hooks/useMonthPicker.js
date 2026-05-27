@@ -8,7 +8,7 @@ export function useMonthPicker() {
   const onChange = useCallback((y, m) => {
     setYear(y);
     setMonth(m);
-  }, []);
+  }, [setYear, setMonth]);
 
   return { year, month, onChange };
 }
