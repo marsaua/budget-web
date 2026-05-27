@@ -18,9 +18,8 @@ export function useTransactions(roomId, year, month, categories) {
     let active = true;
     setLoading(true);
 
-    const cats = categories ? [...categories] : [];
     api
-      .getTransactions(roomId, year, month, cats)
+      .getTransactions(roomId, year, month, categoriesKey ? categoriesKey.split(",") : [])
       .then((data) => {
         if (!active) return;
         setTransactions(data.transactions);
@@ -34,7 +33,7 @@ export function useTransactions(roomId, year, month, categories) {
       });
 
     return () => { active = false; };
-  }, [roomId, year, month, tick, categoriesKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [roomId, year, month, tick, categoriesKey]);
 
   const create = useCallback(
     async (attrs) => { await api.createTransaction(roomId, attrs); invalidate(); },
