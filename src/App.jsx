@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "./api";
 import { useAuth } from "./hooks/useAuth";
 import { useRoom } from "./hooks/useRoom";
@@ -13,15 +13,28 @@ import { TransactionList } from "./components/TransactionList";
 import { TransactionModal } from "./components/TransactionModal";
 import { InviteModal } from "./components/InviteModal";
 import { RoomSettingsModal } from "./components/RoomSettingsModal";
+import { CategoryFilter } from "./components/CategoryFilter";
 
 export default function App() {
   const { user, isAuthenticated, signIn, signUp, signOut } = useAuth();
   const { room, rooms, loading: roomLoading, selectRoom, createRoom, renameRoom, clearRoom } = useRoom(isAuthenticated);
   const { year, month, onChange } = useMonthPicker();
-  const { transactions, summary, loading, create, update, remove } = useTransactions(room?.id, year, month);
+  const [selectedCategories, setSelectedCategories] = useState(new Set());
+  const { transactions, summary, loading, create, update, remove } = useTransactions(room?.id, year, month, selectedCategories);
   const { modal, openAdd, openEdit, close } = useTransactionModal();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => setSelectedCategories(new Set()), [year, month]);
+
+  function toggleCategory(cat) {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+      next.has(cat) ? next.delete(cat) : next.add(cat);
+      return next;
+    });
+  }
+
   const isOwner = !!user && !!room && user.id === room.owner_id;
 
   if (!isAuthenticated) {
@@ -86,6 +99,12 @@ export default function App() {
               <button className="fab fab--remove" onClick={() => openAdd("expense")} aria-label="Add expense">−</button>
               <button className="fab fab--add" onClick={() => openAdd("income")} aria-label="Add income">+</button>
             </div>
+
+            <CategoryFilter
+              selected={selectedCategories}
+              onToggle={toggleCategory}
+              onClear={() => setSelectedCategories(new Set())}
+            />
 
             <TransactionList transactions={transactions} onEdit={openEdit} onDelete={handleDelete} />
           </>
