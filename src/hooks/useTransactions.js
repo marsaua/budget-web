@@ -3,7 +3,7 @@ import { api } from "../api";
 
 const DEFAULT_SUMMARY = { income: 0, expense: 0, balance: 0 };
 
-export function useTransactions(roomId, year, month) {
+export function useTransactions(roomId, year, month, categories) {
   const [transactions, setTransactions] = useState([]);
   const [summary, setSummary] = useState(DEFAULT_SUMMARY);
   const [loading, setLoading] = useState(true);
@@ -11,13 +11,16 @@ export function useTransactions(roomId, year, month) {
 
   const invalidate = useCallback(() => setTick((t) => t + 1), []);
 
+  const categoriesKey = categories ? [...categories].sort().join(",") : "";
+
   useEffect(() => {
     if (!roomId) return;
     let active = true;
     setLoading(true);
 
+    const cats = categories ? [...categories] : [];
     api
-      .getTransactions(roomId, year, month)
+      .getTransactions(roomId, year, month, cats)
       .then((data) => {
         if (!active) return;
         setTransactions(data.transactions);
@@ -31,7 +34,7 @@ export function useTransactions(roomId, year, month) {
       });
 
     return () => { active = false; };
-  }, [roomId, year, month, tick]);
+  }, [roomId, year, month, tick, categoriesKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const create = useCallback(
     async (attrs) => { await api.createTransaction(roomId, attrs); invalidate(); },
