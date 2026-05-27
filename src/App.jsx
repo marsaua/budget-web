@@ -26,17 +26,17 @@ export default function App() {
   const { modal, openAdd, openEdit, close } = useTransactionModal();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [roomError, setRoomError] = useState(false);
+  const [roomError, setRoomError] = useState(null);
 
   useEffect(() => {
     if (roomNotFound) {
-      setRoomError(true); // eslint-disable-line react-hooks/set-state-in-effect
+      setRoomError("Room not found or access denied."); // eslint-disable-line react-hooks/set-state-in-effect
       urlState.setRoom(null);
     }
   }, [roomNotFound]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (room != null) setRoomError(false); // eslint-disable-line react-hooks/set-state-in-effect
+    if (room != null) setRoomError(null); // eslint-disable-line react-hooks/set-state-in-effect
   }, [room]);
 
   const isOwner = !!user && !!room && user.id === room.owner_id;
@@ -62,7 +62,7 @@ export default function App() {
           const r = await createRoom(name);
           urlState.setRoom(r.id);
         }}
-        notice={roomError ? "Room not found or access denied." : null}
+        notice={roomError}
       />
     );
   }
