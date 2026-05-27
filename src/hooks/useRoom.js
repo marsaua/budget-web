@@ -35,5 +35,6 @@ export function useRoom(roomId, enabled, onAutoSelect) {
     setRooms((prev) => prev.map((r) => r.id === roomId ? { ...r, name: newName } : r));
   }, [roomId]);
 
-  return { room, rooms, loading, createRoom, renameRoom };
+  const roomNotFound = !loading && roomId != null && room === null;
+  return { room, rooms, loading, roomNotFound, createRoom, renameRoom };
 }
