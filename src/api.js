@@ -60,8 +60,8 @@ export const api = {
   deleteRoom: (roomId) => req("DELETE", `/rooms/${roomId}`),
 
   // Transactions (room-scoped)
-  getTransactions: (roomId, year, month, categories = []) => {
-    const params = new URLSearchParams({ year, month });
+  getTransactions: (roomId, year, month, categories = [], page = 1) => {
+    const params = new URLSearchParams({ year, month, page });
     for (const cat of categories.filter(Boolean)) params.append("categories[]", cat);
     return req("GET", `/rooms/${roomId}/transactions?${params}`);
   },
