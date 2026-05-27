@@ -1,17 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../api";
 
-const DEFAULT_SUMMARY = { income: 0, expense: 0, balance: 0 };
+const DEFAULT_SUMMARY    = { income: 0, expense: 0, balance: 0 };
+const DEFAULT_PAGINATION = { page: 1, per_page: 20, total: 0, total_pages: 1 };
 
-export function useTransactions(roomId, year, month, categories) {
+export function useTransactions(roomId, year, month, categories, page) {
   const [transactions, setTransactions] = useState([]);
-  const [summary, setSummary] = useState(DEFAULT_SUMMARY);
-  const [tick, setTick] = useState(0);
+  const [summary, setSummary]           = useState(DEFAULT_SUMMARY);
+  const [pagination, setPagination]     = useState(DEFAULT_PAGINATION);
+  const [tick, setTick]                 = useState(0);
 
   const invalidate = useCallback(() => setTick((t) => t + 1), []);
 
   const categoriesKey = categories ? [...categories].sort().join(",") : "";
-  const fetchKey = roomId ? `${roomId}:${year}:${month}:${tick}:${categoriesKey}` : null;
+  const fetchKey = roomId
+    ? `${roomId}:${year}:${month}:${page}:${tick}:${categoriesKey}`
+    : null;
   const [resolvedKey, setResolvedKey] = useState(null);
   const loading = fetchKey !== resolvedKey;
 
@@ -19,12 +23,14 @@ export function useTransactions(roomId, year, month, categories) {
     if (!fetchKey) return;
     let active = true;
 
+    const cats = categoriesKey ? categoriesKey.split(",") : [];
     api
-      .getTransactions(roomId, year, month, categoriesKey ? categoriesKey.split(",") : [])
+      .getTransactions(roomId, year, month, cats, page)
       .then((data) => {
         if (!active) return;
         setTransactions(data.transactions);
         setSummary(data.summary);
+        setPagination(data.pagination);
         setResolvedKey(fetchKey);
       })
       .catch((err) => {
@@ -51,5 +57,5 @@ export function useTransactions(roomId, year, month, categories) {
     [roomId, invalidate]
   );
 
-  return { transactions, summary, loading, create, update, remove };
+  return { transactions, summary, pagination, loading, create, update, remove };
 }
