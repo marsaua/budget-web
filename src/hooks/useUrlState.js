@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 
 function toggle(set, item) {
   const next = new Set(set);
@@ -35,7 +35,9 @@ function buildUrl(state) {
 export function useUrlState() {
   const [state, setState] = useState(() => parseUrl());
   const stateRef = useRef(state);
-  stateRef.current = state;
+  useLayoutEffect(() => {
+    stateRef.current = state;
+  });
 
   useEffect(() => {
     const onPop = () => setState(parseUrl());

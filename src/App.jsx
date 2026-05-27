@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "./api";
 import { useAuth } from "./hooks/useAuth";
 import { useRoom } from "./hooks/useRoom";
-import { useMonthPicker } from "./hooks/useMonthPicker";
+import { useUrlState } from "./hooks/useUrlState";
 import { useTransactions } from "./hooks/useTransactions";
 import { useTransactionModal } from "./hooks/useTransactionModal";
 import { AuthPage } from "./components/AuthPage";
@@ -14,40 +14,18 @@ import { TransactionModal } from "./components/TransactionModal";
 import { InviteModal } from "./components/InviteModal";
 import { RoomSettingsModal } from "./components/RoomSettingsModal";
 import { CategoryFilter } from "./components/CategoryFilter";
+import { Pagination } from "./components/Pagination";
 
 export default function App() {
   const { user, isAuthenticated, signIn, signUp, signOut } = useAuth();
-  const {
-    room,
-    rooms,
-    loading: roomLoading,
-    selectRoom,
-    createRoom,
-    renameRoom,
-    clearRoom,
-  } = useRoom(isAuthenticated);
-  const { year, month, onChange } = useMonthPicker();
-  const [selectedCategories, setSelectedCategories] = useState(new Set());
-  const { transactions, summary, loading, create, update, remove } =
-    useTransactions(room?.id, year, month, selectedCategories);
+  const urlState = useUrlState();
+  const { room, rooms, loading: roomLoading, createRoom, renameRoom } =
+    useRoom(urlState.roomId, isAuthenticated, urlState.setRoom);
+  const { transactions, summary, pagination, loading, create, update, remove } =
+    useTransactions(room?.id, urlState.year, urlState.month, urlState.categories, urlState.page);
   const { modal, openAdd, openEdit, close } = useTransactionModal();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-
-  const filterKey = `${room?.id ?? ""}-${year}-${month}`;
-  const [lastFilterKey, setLastFilterKey] = useState(filterKey);
-  if (filterKey !== lastFilterKey) {
-    setSelectedCategories(new Set());
-    setLastFilterKey(filterKey);
-  }
-
-  function toggleCategory(cat) {
-    setSelectedCategories((prev) => {
-      const next = new Set(prev);
-      next.has(cat) ? next.delete(cat) : next.add(cat);
-      return next;
-    });
-  }
 
   const isOwner = !!user && !!room && user.id === room.owner_id;
 
@@ -65,7 +43,14 @@ export default function App() {
 
   if (!room) {
     return (
-      <RoomSelector rooms={rooms} onSelect={selectRoom} onCreate={createRoom} />
+      <RoomSelector
+        rooms={rooms}
+        onSelect={(r) => urlState.setRoom(r.id)}
+        onCreate={async (name) => {
+          const r = await createRoom(name);
+          urlState.setRoom(r.id);
+        }}
+      />
     );
   }
 
@@ -91,9 +76,9 @@ export default function App() {
   return (
     <div className="app">
       <Header
-        selectedYear={year}
-        selectedMonth={month}
-        onChange={onChange}
+        selectedYear={urlState.year}
+        selectedMonth={urlState.month}
+        onChange={urlState.setMonth}
         roomName={room.name}
         user={user}
         onInvite={() => setInviteOpen(true)}
@@ -143,15 +128,21 @@ export default function App() {
             </div>
 
             <CategoryFilter
-              selected={selectedCategories}
-              onToggle={toggleCategory}
-              onClear={() => setSelectedCategories(new Set())}
+              selected={urlState.categories}
+              onToggle={urlState.toggleCategory}
+              onClear={urlState.clearCategories}
             />
 
             <TransactionList
               transactions={transactions}
               onEdit={openEdit}
               onDelete={handleDelete}
+            />
+
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.total_pages}
+              onPage={urlState.setPage}
             />
           </>
         )}
@@ -173,7 +164,7 @@ export default function App() {
             setSettingsOpen(false);
           }}
           onDelete={() => {
-            clearRoom();
+            urlState.setRoom(null);
             setSettingsOpen(false);
           }}
         />
