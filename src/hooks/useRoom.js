@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../api";
 
-export function useRoom(enabled) {
+export function useRoom(roomId, enabled, onAutoSelect) {
   const [rooms, setRooms] = useState([]);
-  const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,24 +13,27 @@ export function useRoom(enabled) {
       .then((data) => {
         if (!active) return;
         setRooms(data);
-        if (data.length === 1) setRoom(data[0]);
         setLoading(false);
+        if (roomId == null && data.length === 1) {
+          onAutoSelect(data[0].id);
+        }
       })
       .catch(() => { if (active) setLoading(false); });
 
     return () => { active = false; };
-  }, [enabled]);
+  }, [enabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectRoom = useCallback((r) => setRoom(r), []);
+  const room = rooms.find((r) => r.id === roomId) ?? null;
 
   const createRoom = useCallback(async (name) => {
     const r = await api.createRoom(name);
     setRooms((prev) => [...prev, r]);
-    setRoom(r);
+    return r;
   }, []);
 
-  const renameRoom = useCallback((newName) => setRoom((r) => ({ ...r, name: newName })), []);
-  const clearRoom = useCallback(() => setRoom(null), []);
+  const renameRoom = useCallback((newName) => {
+    setRooms((prev) => prev.map((r) => r.id === roomId ? { ...r, name: newName } : r));
+  }, [roomId]);
 
-  return { room, rooms, loading, selectRoom, createRoom, renameRoom, clearRoom };
+  return { room, rooms, loading, createRoom, renameRoom };
 }
