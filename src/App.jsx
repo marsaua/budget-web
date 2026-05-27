@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "./api";
 import { useAuth } from "./hooks/useAuth";
 import { useRoom } from "./hooks/useRoom";
@@ -19,13 +19,21 @@ import { Pagination } from "./components/Pagination";
 export default function App() {
   const { user, isAuthenticated, signIn, signUp, signOut } = useAuth();
   const urlState = useUrlState();
-  const { room, rooms, loading: roomLoading, createRoom, renameRoom } =
+  const { room, rooms, loading: roomLoading, roomNotFound, createRoom, renameRoom } =
     useRoom(urlState.roomId, isAuthenticated, urlState.setRoom);
   const { transactions, summary, pagination, loading, create, update, remove } =
     useTransactions(room?.id, urlState.year, urlState.month, urlState.categories, urlState.page);
   const { modal, openAdd, openEdit, close } = useTransactionModal();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [roomError, setRoomError] = useState(false);
+
+  useEffect(() => {
+    if (roomNotFound) {
+      setRoomError(true);
+      urlState.setRoom(null);
+    }
+  }, [roomNotFound]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isOwner = !!user && !!room && user.id === room.owner_id;
 
@@ -50,6 +58,7 @@ export default function App() {
           const r = await createRoom(name);
           urlState.setRoom(r.id);
         }}
+        notice={roomError ? "Room not found or access denied." : null}
       />
     );
   }
