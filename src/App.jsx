@@ -30,13 +30,13 @@ export default function App() {
 
   useEffect(() => {
     if (roomNotFound) {
-      setRoomError(true);
+      setRoomError(true); // eslint-disable-line react-hooks/set-state-in-effect
       urlState.setRoom(null);
     }
   }, [roomNotFound]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (room != null) setRoomError(false);
+    if (room != null) setRoomError(false); // eslint-disable-line react-hooks/set-state-in-effect
   }, [room]);
 
   const isOwner = !!user && !!room && user.id === room.owner_id;
