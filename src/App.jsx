@@ -92,7 +92,7 @@ export default function App() {
           <div className="loader">Loading…</div>
         ) : (
           <>
-            <DonutChart transactions={transactions} summary={summary} />
+            <DonutChart summary={summary} />
 
             <div className="balance-bar">
               <span>

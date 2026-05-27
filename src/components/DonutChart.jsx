@@ -20,13 +20,8 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
   return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y}`;
 }
 
-export function DonutChart({ transactions, summary }) {
-  // Build segments from expense transactions grouped by category
-  const expenseMap = {};
-  for (const t of transactions) {
-    if (t.kind !== "expense") continue;
-    expenseMap[t.category] = (expenseMap[t.category] || 0) + t.amount;
-  }
+export function DonutChart({ summary }) {
+  const expenseMap = summary.by_category || {};
 
   const totalExpense = summary.expense || 0;
   const segments = Object.entries(expenseMap)

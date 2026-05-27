@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../api";
 
-const DEFAULT_SUMMARY    = { income: 0, expense: 0, balance: 0 };
+const DEFAULT_SUMMARY    = { income: 0, expense: 0, balance: 0, by_category: {} };
 const DEFAULT_PAGINATION = { page: 1, per_page: 20, total: 0, total_pages: 1 };
 
 export function useTransactions(roomId, year, month, categories, page) {
