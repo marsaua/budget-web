@@ -36,7 +36,12 @@ async function authReq(path, body) {
     body: JSON.stringify(body),
   });
   const token = res.headers.get("Authorization")?.replace("Bearer ", "") ?? null;
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error("Request failed");
+  }
   if (!res.ok) throw new Error(data.errors?.join(", ") || data.error || "Request failed");
   return { user: data.user, token };
 }

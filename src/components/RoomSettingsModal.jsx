@@ -121,6 +121,14 @@ export function RoomSettingsModal({ room, onClose, onRename, onDelete }) {
               />
               <button
                 className="btn-primary"
+                style={{
+                  width: "auto",
+                  flexShrink: 0,
+                  height: 48,
+                  padding: "0 18px",
+                  fontSize: 15,
+                  background: "var(--color-primary)",
+                }}
                 onClick={handleRename}
                 disabled={renameLoading || !renameValue.trim() || renameValue.trim() === room.name}
               >
